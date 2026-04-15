@@ -1,50 +1,61 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Layout, Menu } from "antd";
+import {
+  QrcodeOutlined,
+  UnorderedListOutlined,
+  DiffOutlined,
+} from "@ant-design/icons";
+import QrCode from "./pages/QrCode";
+import MenuParser from "./pages/MenuParser";
+import DiffTool from "./pages/DiffTool";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+const { Sider, Content } = Layout;
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+const menuItems = [
+  {
+    key: "/",
+    icon: <QrcodeOutlined />,
+    label: "二维码生成",
+  },
+  {
+    key: "/menu-parser",
+    icon: <UnorderedListOutlined />,
+    label: "菜单解析",
+  },
+  {
+    key: "/diff",
+    icon: <DiffOutlined />,
+    label: "文件对比",
+  },
+];
+
+function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+    <Layout style={{ minHeight: "100vh" }}>
+      <Sider width={180} theme="light" style={{ borderRight: "1px solid #f0f0f0" }}>
+        <div className="app-logo">BS Tools</div>
+        <Menu
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          onClick={({ key }) => navigate(key)}
+          style={{ borderRight: 0 }}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      </Sider>
+      <Layout>
+        <Content className="app-content">
+          <Routes>
+            <Route path="/" element={<QrCode />} />
+            <Route path="/menu-parser" element={<MenuParser />} />
+            <Route path="/diff" element={<DiffTool />} />
+          </Routes>
+        </Content>
+      </Layout>
+    </Layout>
   );
 }
 

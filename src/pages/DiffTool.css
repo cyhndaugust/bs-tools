@@ -1,0 +1,107 @@
+.diff-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.diff-controls {
+  margin-bottom: 16px;
+}
+
+.diff-inputs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.diff-input-panel {
+  flex: 1;
+}
+
+.diff-input-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.diff-result {
+  flex: 1;
+  min-height: 0;
+}
+
+.diff-stats {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.diff-lines {
+  font-family: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  overflow: auto;
+  max-height: calc(100vh - 420px);
+}
+
+.diff-line {
+  display: flex;
+  white-space: pre;
+  min-height: 22px;
+}
+
+.diff-line-no {
+  display: inline-block;
+  width: 48px;
+  text-align: right;
+  padding-right: 8px;
+  color: #999;
+  user-select: none;
+  flex-shrink: 0;
+  border-right: 1px solid #e8e8e8;
+}
+
+.diff-line-no-new {
+  border-right: none;
+}
+
+.diff-prefix {
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.diff-content {
+  flex: 1;
+  padding-left: 4px;
+  overflow: hidden;
+}
+
+.diff-insert {
+  background-color: #e6ffec;
+}
+
+.diff-insert .diff-prefix {
+  color: #1a7f37;
+}
+
+.diff-insert .diff-line-no {
+  background-color: #ccffd8;
+}
+
+.diff-delete {
+  background-color: #ffebe9;
+}
+
+.diff-delete .diff-prefix {
+  color: #cf222e;
+}
+
+.diff-delete .diff-line-no {
+  background-color: #ffd7d5;
+}

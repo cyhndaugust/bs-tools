@@ -1,0 +1,25 @@
+.menu-parser-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.menu-parser-header {
+  margin-bottom: 20px;
+}
+
+.menu-parser-stats {
+  margin-top: 8px;
+}
+
+.menu-parser-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.menu-parser-collapse {
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
