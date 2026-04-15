@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { Button, Collapse, Table, Typography, message, Space, Spin, Tag } from "antd";
-import { UploadOutlined, FileTextOutlined } from "@ant-design/icons";
+import { useState, useMemo } from "react";
+import { Button, Collapse, Table, Input, Typography, message, Space, Spin, Tag } from "antd";
+import { UploadOutlined, SearchOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/plugin-fs";
 import "./MenuParser.css";
 
 const { Text } = Typography;
+const { TextArea } = Input;
 
 interface MenuItem {
   show_name_cn: string;
@@ -62,12 +63,10 @@ const columns = [
     key: "disabled_status",
     width: 80,
     render: (val: string) =>
-      val === "0" ? (
-        <Tag color="green">启用</Tag>
-      ) : val === "1" ? (
-        <Tag color="red">禁用</Tag>
+      val === "1" ? (
+        <Tag color="red">不可用</Tag>
       ) : (
-        val || "-"
+        <Tag color="green">可用</Tag>
       ),
   },
 ];
@@ -75,40 +74,63 @@ const columns = [
 function MenuParser() {
   const [categories, setCategories] = useState<ParsedCategory[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fileName, setFileName] = useState<string>("");
   const [totalItems, setTotalItems] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [jsonText, setJsonText] = useState("");
+  const [source, setSource] = useState("");
 
-  async function handleLoadFile(path?: string) {
+  const filteredCategories = useMemo(() => {
+    if (!searchKeyword.trim()) return categories;
+    const kw = searchKeyword.toLowerCase();
+    return categories
+      .map((cat) => ({
+        ...cat,
+        sub_categories: cat.sub_categories
+          .map((sub) => ({
+            ...sub,
+            items: sub.items.filter(
+              (item) =>
+                item.show_name_cn.toLowerCase().includes(kw) ||
+                item.link_id.toLowerCase().includes(kw),
+            ),
+          }))
+          .filter((sub) => sub.items.length > 0),
+      }))
+      .filter((cat) => cat.sub_categories.length > 0);
+  }, [categories, searchKeyword]);
+
+  const filteredTotal = useMemo(() => {
+    return filteredCategories.reduce(
+      (sum, cat) =>
+        sum + cat.sub_categories.reduce((s, sub) => s + sub.items.length, 0),
+      0,
+    );
+  }, [filteredCategories]);
+
+  function applyResult(result: ParsedCategory[], sourceName: string) {
+    setCategories(result);
+    setSource(sourceName);
+    setSearchKeyword("");
+    const total = result.reduce(
+      (sum, cat) =>
+        sum + cat.sub_categories.reduce((s, sub) => s + sub.items.length, 0),
+      0,
+    );
+    setTotalItems(total);
+    message.success(`解析完成，共 ${result.length} 个分类，${total} 个餐品`);
+  }
+
+  async function handleParseText() {
+    if (!jsonText.trim()) {
+      message.warning("请输入 JSON 内容");
+      return;
+    }
     setLoading(true);
     try {
-      let filePath = path;
-      if (!filePath) {
-        const selected = await open({
-          filters: [{ name: "JSON", extensions: ["json"] }],
-          multiple: false,
-        });
-        if (!selected) {
-          setLoading(false);
-          return;
-        }
-        filePath = selected as string;
-      }
-
-      const content = await readTextFile(filePath);
       const result = await invoke<ParsedCategory[]>("parse_menu_json", {
-        jsonContent: content,
+        jsonContent: jsonText,
       });
-
-      setCategories(result);
-      setFileName(filePath.split("/").pop() || filePath);
-
-      const total = result.reduce(
-        (sum, cat) =>
-          sum + cat.sub_categories.reduce((s, sub) => s + sub.items.length, 0),
-        0,
-      );
-      setTotalItems(total);
-      message.success(`解析完成，共 ${result.length} 个分类，${total} 个餐品`);
+      applyResult(result, "文本输入");
     } catch (e) {
       message.error(`解析失败: ${e}`);
     } finally {
@@ -116,27 +138,32 @@ function MenuParser() {
     }
   }
 
-  async function handleLoadMock() {
+  async function handleLoadFile() {
     setLoading(true);
     try {
-      const result = await invoke<ParsedCategory[]>("load_mock_menu");
-      setCategories(result);
-      setFileName("menu.json (内置mock)");
-      const total = result.reduce(
-        (sum, cat) =>
-          sum + cat.sub_categories.reduce((s, sub) => s + sub.items.length, 0),
-        0,
-      );
-      setTotalItems(total);
-      message.success(`解析完成，共 ${result.length} 个分类，${total} 个餐品`);
+      const selected = await open({
+        filters: [{ name: "JSON", extensions: ["json"] }],
+        multiple: false,
+      });
+      if (!selected) {
+        setLoading(false);
+        return;
+      }
+      const filePath = selected as string;
+      const content = await readTextFile(filePath);
+      setJsonText(content);
+      const result = await invoke<ParsedCategory[]>("parse_menu_json", {
+        jsonContent: content,
+      });
+      applyResult(result, filePath.split("/").pop() || filePath);
     } catch (e) {
-      message.error(`加载mock数据失败: ${e}`);
+      message.error(`解析失败: ${e}`);
     } finally {
       setLoading(false);
     }
   }
 
-  const collapseItems = categories.map((cat) => ({
+  const collapseItems = filteredCategories.map((cat) => ({
     key: cat.class_id,
     label: (
       <span>
@@ -189,38 +216,63 @@ function MenuParser() {
 
   return (
     <div className="menu-parser-page">
-      <div className="menu-parser-header">
-        <Space>
-          <Button
-            type="primary"
-            icon={<FileTextOutlined />}
-            onClick={handleLoadMock}
-            loading={loading}
-          >
-            加载内置数据
-          </Button>
-          <Button
-            icon={<UploadOutlined />}
-            onClick={() => handleLoadFile()}
-            loading={loading}
-          >
-            选择 JSON 文件
-          </Button>
-        </Space>
-        {fileName && (
-          <div className="menu-parser-stats">
-            <Text type="secondary">文件: {fileName}</Text>
-            <Text type="secondary" style={{ marginLeft: 16 }}>
-              分类: {categories.length} | 餐品: {totalItems}
-            </Text>
-          </div>
-        )}
+      <div className="menu-parser-input">
+        <TextArea
+          value={jsonText}
+          onChange={(e) => setJsonText(e.target.value)}
+          placeholder="粘贴菜单 JSON 数据..."
+          rows={6}
+          style={{ fontFamily: "monospace", fontSize: 12 }}
+        />
+        <div className="menu-parser-actions">
+          <Space>
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              onClick={handleParseText}
+              loading={loading}
+            >
+              解析
+            </Button>
+            <Button
+              icon={<UploadOutlined />}
+              onClick={handleLoadFile}
+              loading={loading}
+            >
+              从文件加载
+            </Button>
+            {categories.length > 0 && (
+              <Input
+                placeholder="搜索餐品名或 linkId..."
+                prefix={<SearchOutlined style={{ color: "#bbb" }} />}
+                allowClear
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                style={{ width: 260 }}
+              />
+            )}
+          </Space>
+          {source && (
+            <div className="menu-parser-stats">
+              <Text type="secondary">
+                来源: {source} | 分类: {categories.length} | 餐品: {totalItems}
+              </Text>
+              {searchKeyword && (
+                <Text type="secondary"> | 匹配: {filteredTotal} 项</Text>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <Spin spinning={loading}>
         {categories.length === 0 ? (
           <div className="menu-parser-empty">
-            <Text type="secondary">请加载菜单 JSON 文件进行解析</Text>
+            <Text type="secondary">请粘贴或加载菜单 JSON 数据进行解析</Text>
+          </div>
+        ) : filteredCategories.length === 0 ? (
+          <div className="menu-parser-empty">
+            <Text type="secondary">无匹配结果</Text>
           </div>
         ) : (
           <Collapse

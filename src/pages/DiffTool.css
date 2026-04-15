@@ -82,6 +82,38 @@
   overflow: hidden;
 }
 
+/* highlight.js tokens inherit diff background */
+.diff-content .hljs-keyword,
+.diff-content .hljs-built_in,
+.diff-content .hljs-type,
+.diff-content .hljs-literal,
+.diff-content .hljs-number,
+.diff-content .hljs-string,
+.diff-content .hljs-symbol,
+.diff-content .hljs-attr,
+.diff-content .hljs-selector-id,
+.diff-content .hljs-selector-class,
+.diff-content .hljs-selector-attr,
+.diff-content .hljs-selector-pseudo,
+.diff-content .hljs-template-tag,
+.diff-content .hljs-template-variable,
+.diff-content .hljs-addition,
+.diff-content .hljs-deletion,
+.diff-content .hljs-comment,
+.diff-content .hljs-quote,
+.diff-content .hljs-meta,
+.diff-content .hljs-title,
+.diff-content .hljs-section,
+.diff-content .hljs-name,
+.diff-content .hljs-variable,
+.diff-content .hljs-params,
+.diff-content .hljs-regexp,
+.diff-content .hljs-link,
+.diff-content .hljs-tag,
+.diff-content .hljs-punctuation {
+  background: transparent;
+}
+
 .diff-insert {
   background-color: #e6ffec;
 }

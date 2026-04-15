@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Input, List, Typography, Popconfirm, Empty, message, Spin } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, SearchOutlined } from "@ant-design/icons";
 import { invoke } from "@tauri-apps/api/core";
 import "./QrCode.css";
 
@@ -20,10 +20,17 @@ function QrCode() {
   const [currentContent, setCurrentContent] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   useEffect(() => {
     loadHistory();
   }, []);
+
+  const filteredHistory = useMemo(() => {
+    if (!searchKeyword.trim()) return history;
+    const kw = searchKeyword.toLowerCase();
+    return history.filter((item) => item.content.toLowerCase().includes(kw));
+  }, [history, searchKeyword]);
 
   async function loadHistory() {
     setLoading(true);
@@ -122,16 +129,27 @@ function QrCode() {
         </div>
 
         <div className="qrcode-history">
-          <Text strong style={{ fontSize: 16, marginBottom: 12, display: "block" }}>
-            历史记录 ({history.length})
-          </Text>
+          <div className="qrcode-history-header">
+            <Text strong style={{ fontSize: 16 }}>
+              历史记录 ({history.length})
+            </Text>
+            <Input
+              placeholder="搜索历史..."
+              prefix={<SearchOutlined style={{ color: "#bbb" }} />}
+              allowClear
+              size="small"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              className="qrcode-search-input"
+            />
+          </div>
           <Spin spinning={loading}>
-            {history.length === 0 ? (
-              <Empty description="暂无历史记录" />
+            {filteredHistory.length === 0 ? (
+              <Empty description={searchKeyword ? "无匹配结果" : "暂无历史记录"} />
             ) : (
               <List
                 className="qrcode-history-list"
-                dataSource={history}
+                dataSource={filteredHistory}
                 renderItem={(item) => (
                   <List.Item
                     className={`qrcode-history-item ${item.content === currentContent ? "active" : ""}`}

@@ -121,9 +121,3 @@ pub fn parse_menu_json(json_content: String) -> Result<Vec<ParsedCategory>, Stri
 
     Ok(result)
 }
-
-#[tauri::command]
-pub fn load_mock_menu() -> Result<Vec<ParsedCategory>, String> {
-    let mock_json = include_str!("../../../mock/menu.json");
-    parse_menu_json(mock_json.to_string())
-}

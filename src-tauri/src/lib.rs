@@ -2,7 +2,7 @@ mod commands;
 mod db;
 
 use commands::diff::compute_diff;
-use commands::menu_parser::{load_mock_menu, parse_menu_json};
+use commands::menu_parser::parse_menu_json;
 use commands::qrcode::{delete_qr_history, generate_qrcode, get_qr_history};
 use tauri::Manager;
 
@@ -22,7 +22,6 @@ pub fn run() {
             get_qr_history,
             delete_qr_history,
             parse_menu_json,
-            load_mock_menu,
             compute_diff,
         ])
         .run(tauri::generate_context!())

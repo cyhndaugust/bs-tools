@@ -52,6 +52,17 @@
   overflow-y: auto;
 }
 
+.qrcode-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.qrcode-search-input {
+  width: 180px;
+}
+
 .qrcode-history-list {
   max-height: calc(100vh - 220px);
   overflow-y: auto;

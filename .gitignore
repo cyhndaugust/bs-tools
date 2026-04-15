@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Mock data
+mock/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
