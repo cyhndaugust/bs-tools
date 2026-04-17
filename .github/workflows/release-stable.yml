@@ -32,7 +32,7 @@ jobs:
       APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
       APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-      APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
+      APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,8 +54,10 @@ jobs:
           workspaces: ./src-tauri -> target
 
       - name: Restore App Store Connect key
-        if: ${{ secrets.APPLE_API_KEY_CONTENT != '' }}
-        run: printf '%s' "${{ secrets.APPLE_API_KEY_CONTENT }}" > "$APPLE_API_KEY_PATH"
+        if: ${{ env.APPLE_API_KEY_CONTENT != '' }}
+        run: |
+          echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8" >> "$GITHUB_ENV"
+          printf '%s' "$APPLE_API_KEY_CONTENT" > "$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
@@ -72,7 +74,6 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: BS Tools ${{ github.ref_name }}
