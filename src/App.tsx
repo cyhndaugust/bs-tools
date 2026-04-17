@@ -8,6 +8,7 @@ import {
 import QrCode from "./pages/QrCode";
 import MenuParser from "./pages/MenuParser";
 import DiffTool from "./pages/DiffTool";
+import UpdateBanner from "./components/UpdateBanner";
 import "./App.css";
 
 const { Sider, Content } = Layout;
@@ -48,6 +49,7 @@ function App() {
       </Sider>
       <Layout>
         <Content className="app-content">
+          <UpdateBanner />
           <Routes>
             <Route path="/" element={<QrCode />} />
             <Route path="/menu-parser" element={<MenuParser />} />
