@@ -78,5 +78,5 @@ jobs:
           releaseBody: Rolling macOS build from the main branch.
           releaseDraft: false
           prerelease: true
-          uploadUpdaterJson: false
+          includeUpdaterJson: false
           args: --target ${{ matrix.target }} --bundles app,dmg

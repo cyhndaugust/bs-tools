@@ -80,5 +80,5 @@ jobs:
           releaseBody: Stable macOS release for BS Tools.
           releaseDraft: false
           prerelease: false
-          uploadUpdaterJson: ${{ matrix.uploadUpdaterJson }}
+          includeUpdaterJson: ${{ matrix.uploadUpdaterJson }}
           args: --target ${{ matrix.target }} --bundles app,dmg
