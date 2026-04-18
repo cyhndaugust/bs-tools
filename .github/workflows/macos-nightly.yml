@@ -25,8 +25,6 @@ jobs:
     env:
       ENABLE_APPLE_SIGNING: ${{ vars.ENABLE_APPLE_SIGNING == 'true' && 'true' || 'false' }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,6 +56,17 @@ jobs:
             printf '%s' "$APPLE_API_KEY_CONTENT" > "$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
           fi
 
+      - name: Detect updater signing availability
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" | grep -q '^untrusted comment:' && [ -n "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" ]; then
+            echo "ENABLE_TAURI_UPDATER_SIGNING=true" >> "$GITHUB_ENV"
+          else
+            echo "ENABLE_TAURI_UPDATER_SIGNING=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
@@ -65,11 +74,11 @@ jobs:
         run: pnpm check
 
       - uses: tauri-apps/tauri-action@action-v0.6.0
-        if: ${{ env.ENABLE_APPLE_SIGNING == 'true' }}
+        if: ${{ env.ENABLE_APPLE_SIGNING == 'true' && env.ENABLE_TAURI_UPDATER_SIGNING == 'true' }}
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -84,11 +93,28 @@ jobs:
           args: --target ${{ matrix.target }} --bundles app,dmg
 
       - uses: tauri-apps/tauri-action@action-v0.6.0
-        if: ${{ env.ENABLE_APPLE_SIGNING != 'true' }}
+        if: ${{ env.ENABLE_APPLE_SIGNING == 'true' && env.ENABLE_TAURI_UPDATER_SIGNING != 'true' }}
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        with:
+          tagName: nightly
+          releaseName: BS Tools Nightly
+          releaseBody: Rolling macOS build from the main branch.
+          releaseDraft: false
+          prerelease: true
+          includeUpdaterJson: false
+          args: --target ${{ matrix.target }} --bundles app,dmg --config src-tauri/tauri.no-updater.conf.json
+
+      - uses: tauri-apps/tauri-action@action-v0.6.0
+        if: ${{ env.ENABLE_APPLE_SIGNING != 'true' && env.ENABLE_TAURI_UPDATER_SIGNING == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: nightly
           releaseName: BS Tools Nightly
@@ -97,3 +123,16 @@ jobs:
           prerelease: true
           includeUpdaterJson: false
           args: --target ${{ matrix.target }} --bundles app,dmg
+
+      - uses: tauri-apps/tauri-action@action-v0.6.0
+        if: ${{ env.ENABLE_APPLE_SIGNING != 'true' && env.ENABLE_TAURI_UPDATER_SIGNING != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        with:
+          tagName: nightly
+          releaseName: BS Tools Nightly
+          releaseBody: Rolling macOS build from the main branch.
+          releaseDraft: false
+          prerelease: true
+          includeUpdaterJson: false
+          args: --target ${{ matrix.target }} --bundles app,dmg --config src-tauri/tauri.no-updater.conf.json
