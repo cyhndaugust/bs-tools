@@ -67,6 +67,7 @@ jobs:
         run: pnpm check
 
       - uses: tauri-apps/tauri-action@action-v0.6.0
+        if: ${{ env.ENABLE_APPLE_SIGNING == 'true' }}
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
@@ -75,6 +76,21 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ env.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_API_ISSUER: ${{ env.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ env.APPLE_API_KEY }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: BS Tools ${{ github.ref_name }}
+          releaseBody: Stable macOS release for BS Tools.
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: ${{ matrix.uploadUpdaterJson }}
+          args: --target ${{ matrix.target }} --bundles app,dmg
+
+      - uses: tauri-apps/tauri-action@action-v0.6.0
+        if: ${{ env.ENABLE_APPLE_SIGNING != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: BS Tools ${{ github.ref_name }}
