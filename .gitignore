@@ -25,3 +25,5 @@ mock/
 *.njsproj
 *.sln
 *.sw?
+
+graphify-out/
